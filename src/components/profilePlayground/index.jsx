@@ -16,6 +16,12 @@ import Radio from "@mui/material/Radio";
 import Checkbox from "@mui/material/Checkbox";
 import Alert from "@mui/material/Alert";
 import Container from "@mui/material/Container";
+import Badge from "@mui/material/Badge";
+import Tooltip from "@mui/material/Tooltip";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import { useState } from "react";
 
 function ProfilePlayground() {
@@ -28,16 +34,40 @@ function ProfilePlayground() {
   const [settings, setSettings] = useState({
     name: "Alice",
     surname: "Smith",
-    avatarSize: 40,
+    avatarSize: 60,
     role: "developer",
     buttonColor: "primary",
     buttonSize: "medium",
     isOnline: false,
     cardVariant: "elevation",
     showAlert: false,
+    avatarUrl: "",
   });
+  const [openDialog, setOpenDialog] = useState(false);
+  const handleOfferClick = () => {
+    setOpenDialog(true);
+  };
   const handleChange = (field, value) => {
     setSettings({ ...settings, [field]: value });
+  };
+  const handleAvatarUpload = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        handleChange("avatarUrl", reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  const handleMessageClick = () => {
+    alert(`Send a message to ${settings.name} ${settings.surname}`);
+  };
+  const offerTexts = {
+    developer: "Offer a project",
+    designer: "Offer a design job",
+    manager: "Offer a position",
+    analyst: "Offer an internship",
   };
   return (
     <Container sx={{ display: "flex", gap: 4, p: 4 }}>
@@ -72,17 +102,33 @@ function ProfilePlayground() {
               gap={2}
             >
               <Box display="flex" gap={3}>
-                <Avatar
-                  sx={{
-                    width: settings.avatarSize,
-                    height: settings.avatarSize,
-                    transition: "0.3s",
-                    bgcolor: `${settings.buttonColor}.main`,
-                  }}
+                <Badge
+                  invisible={!settings.isOnline}
+                  color="success"
+                  variant="dot"
+                  overlap="circular"
+                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
                 >
-                  {settings.name[0]}
-                  {settings.surname[0]}
-                </Avatar>
+                  <Avatar
+                    src={settings.avatarUrl || undefined}
+                    sx={{
+                      width: settings.avatarSize,
+                      height: settings.avatarSize,
+                      transition: "0.3s",
+                      bgcolor: settings.avatarUrl
+                        ? "transparent"
+                        : `${settings.buttonColor}.main`,
+                    }}
+                  >
+                    {!settings.avatarUrl && (
+                      <>
+                        {settings.name[0]}
+                        {settings.surname[0]}
+                      </>
+                    )}
+                  </Avatar>
+                </Badge>
+
                 <Box display="flex" flexDirection="column">
                   <Typography variant="h6">
                     {settings.name} {settings.surname}
@@ -97,7 +143,53 @@ function ProfilePlayground() {
                   </Typography>
                 </Box>
               </Box>
-
+              <Box>
+                <Button
+                  color={settings.buttonColor}
+                  size="small"
+                  variant="outlined"
+                  component="label"
+                >
+                  Upload Photo
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                  />
+                </Button>
+              </Box>
+              {settings.showAlert && (
+                <Box
+                  sx={{
+                    width: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                  }}
+                >
+                  <Alert
+                    severity="info"
+                    action={
+                      <Button
+                        color="inherit"
+                        size="small"
+                        onClick={() => alert("Thanks for reading!")}
+                      >
+                        Got it
+                      </Button>
+                    }
+                  >
+                    Please upload your avatar
+                  </Alert>
+                  <Alert severity="success">Great! MUI is working</Alert>
+                  <Alert severity="info">Try changing the button colors</Alert>
+                  <Alert severity="warning">
+                    Don’t forget to use the attributes
+                  </Alert>
+                  <Alert severity="error">No errors, everything is fine!</Alert>
+                </Box>
+              )}
               <Box
                 sx={{
                   mb: 2,
@@ -132,20 +224,26 @@ function ProfilePlayground() {
               padding: 2,
             }}
           >
-            <Button
-              size={settings.buttonSize}
-              variant="contained"
-              color={settings.buttonColor}
-            >
-              Message
-            </Button>
-            <Button
-              size={settings.buttonSize}
-              variant="outlined"
-              color={settings.buttonColor}
-            >
-              Offer Job
-            </Button>
+            <Tooltip title="Click to write a message" placement="top-start">
+              <Button
+                size={settings.buttonSize}
+                variant="contained"
+                color={settings.buttonColor}
+                onClick={handleMessageClick}
+              >
+                Message
+              </Button>
+            </Tooltip>
+            <Tooltip title="Click to send an offer" placement="top-start">
+              <Button
+                size={settings.buttonSize}
+                variant="outlined"
+                color={settings.buttonColor}
+                onClick={handleOfferClick}
+              >
+                {offerTexts[settings.role]}
+              </Button>
+            </Tooltip>
           </CardActions>
         </Card>
       </Container>
@@ -265,6 +363,32 @@ function ProfilePlayground() {
           </Box>
         </Box>
       </Container>
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>Offer Job</DialogTitle>
+        <DialogContent>
+          {`Do you want to offer a job to ${settings.name} ${settings.surname}?`}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              alert(
+                `Application sent! ${settings.name} ${settings.surname} will receive the offer`,
+              );
+              setOpenDialog(false);
+            }}
+          >
+            OK
+          </Button>
+          <Button
+            onClick={() => {
+              alert("Sending canceled");
+              setOpenDialog(false);
+            }}
+          >
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 }
